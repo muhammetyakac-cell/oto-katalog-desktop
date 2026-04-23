@@ -1,18 +1,17 @@
 import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Image, Font } from '@react-pdf/renderer';
 
-// Türkçe karakterleri sorunsuz basabilmek için Google Fonts'tan Roboto'yu yüklüyoruz
+// Cloudflare üzerinden ASLA patlamayan, en stabil Türkçe destekli Roboto fontları
 Font.register({
   family: 'Roboto',
   fonts: [
-    { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Me5WZLCzYlKw.ttf' }, // Normal
-    { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlvAx05IsDqlA.ttf', fontWeight: 'bold' }, // Kalın
-    { src: 'https://fonts.gstatic.com/s/roboto/v30/KFOkCnqEu92Fr1Mu51xIIzc3WEBvhQ.ttf', fontStyle: 'italic' } // İtalik
+    { src: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Regular.ttf', fontWeight: 'normal' },
+    { src: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Medium.ttf', fontWeight: 'bold' },
+    { src: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/fonts/Roboto/Roboto-Italic.ttf', fontStyle: 'italic' }
   ]
 });
 
 const styles = StyleSheet.create({
-  // Font ailesini sayfanın tamamına uyguluyoruz
   page: { padding: 40, backgroundColor: '#ffffff', fontFamily: 'Roboto' },
   
   header: { 
@@ -20,7 +19,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between', 
     alignItems: 'center', 
     marginBottom: 30, 
-    borderBottom: '2pt solid #f3f4f6', 
+    borderBottomWidth: 2,
+    borderBottomColor: '#f3f4f6',
+    borderBottomStyle: 'solid',
     paddingBottom: 10,
     height: 80 
   },
@@ -36,10 +37,12 @@ const styles = StyleSheet.create({
   
   productCard: {
     width: '48%', 
-    height: 195, // 230'dan 195'e düşürüldü. Gereksiz devasa boşluk kapatıldı.
+    height: 195, 
     marginBottom: 20,
     padding: 10,
-    border: '1pt solid #f3f4f6',
+    borderWidth: 1,
+    borderColor: '#f3f4f6',
+    borderStyle: 'solid',
     borderRadius: 8,
     flexDirection: 'column',
     alignItems: 'center'
@@ -75,7 +78,8 @@ const styles = StyleSheet.create({
   categoryBadge: {
     backgroundColor: '#eff6ff',
     color: '#3b82f6',
-    padding: '2 6',
+    paddingVertical: 2,
+    paddingHorizontal: 6,
     borderRadius: 4,
     fontSize: 7,
     fontWeight: 'bold',
@@ -89,12 +93,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 3,
     marginBottom: 4
-    // Sabit height kaldırıldı. Eğer özellik yoksa yer kaplamayacak.
   },
   customFieldBadge: {
     backgroundColor: '#f3f4f6',
     color: '#4b5563',
-    padding: '2 4',
+    paddingVertical: 2,
+    paddingHorizontal: 4,
     borderRadius: 3,
     fontSize: 6,
     fontWeight: 'bold',
@@ -103,13 +107,14 @@ const styles = StyleSheet.create({
   
   priceContainer: { 
     backgroundColor: '#f9fafb', 
-    padding: '5 12', 
+    paddingVertical: 5,
+    paddingHorizontal: 12,
     borderRadius: 4, 
     width: '100%',
     alignItems: 'center',
-    marginTop: 'auto' // Her zaman en dibe yaslar
+    marginTop: 'auto' 
   },
-  price: { fontSize: 12, fontWeight: 'bold', color: '#111827' }, // 'heavy' font stili roboto'da desteklenmez, 'bold' yapıldı
+  price: { fontSize: 12, fontWeight: 'bold', color: '#111827' },
   
   pageNumber: {
     position: 'absolute',
