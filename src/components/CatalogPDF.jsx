@@ -43,56 +43,53 @@ const styles = StyleSheet.create({
   
   productCard: {
     width: '48%', 
-    height: 240, 
+    height: 245, // A4 sayfasına 3 adet sığabilecek maksimum yüksekliğe çıkarıldı
     marginBottom: 15, 
-    padding: 12,
+    padding: 10, // İç boşluk daraltılarak metinlere alan açıldı
     borderWidth: 1,
-    borderColor: '#e2e8f0', // Daha belirgin ve şık bir çerçeve rengi
+    borderColor: '#e2e8f0', 
     borderStyle: 'solid',
-    borderRadius: 12, // Köşeleri biraz daha yumuşattık
+    borderRadius: 12, 
     flexDirection: 'column',
     alignItems: 'center',
     backgroundColor: '#ffffff'
   },
   
   imageContainer: {
-    height: 100, // Resmi bir tık ufalttık ki yazılara daha çok yer kalsın
+    height: 85, // Metinlere yer açmak için optimize edildi
     width: '100%',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8 
+    marginBottom: 6 
   },
-  image: { width: 100, height: 100, objectFit: 'contain' },
+  image: { width: 85, height: 85, objectFit: 'contain' },
   
   contentBox: { 
     width: '100%', 
     alignItems: 'center',
-    flex: 1, // Kalan boşluğu tamamen kapla
+    flex: 1, 
     display: 'flex',
     flexDirection: 'column'
   },
   
-  // ÜRÜN ADI: Renklendirildi ve satır sınırı kondu
   title: { 
     fontSize: 11, 
     fontWeight: 'bold', 
     textAlign: 'center', 
-    color: '#1e3a8a', // Şık bir Lacivert tonu
+    color: '#1e3a8a', 
     marginBottom: 2,
-    maxLines: 2, // 2 satırdan fazlasına izin vermez
-    textOverflow: 'ellipsis' // Uzunsa sonuna ... koyar
+    maxLines: 2, 
+    textOverflow: 'ellipsis' 
   },
   
-  // STOK KODU: İtalik ve daha belirgin gri
   code: { 
     fontSize: 8, 
     color: '#64748b', 
-    marginBottom: 5, 
+    marginBottom: 4, 
     fontStyle: 'italic' 
   },
   
-  // KATEGORİ: Hap (Pill) tasarımlı renkli etiket
   categoryBadge: {
     backgroundColor: '#e0f2fe',
     color: '#0284c7',
@@ -105,43 +102,43 @@ const styles = StyleSheet.create({
     marginBottom: 6
   },
 
-  // EKSTRA ALANLAR: Taşıp fiyatı bozmasın diye flex:1 ile sıkıştırıldı
   customFieldsContainer: {
     width: '100%',
-    flex: 1, // Kalan alanı doldurur ama taşırmaz
-    overflow: 'hidden',
+    flex: 1, 
     alignItems: 'center',
+    justifyContent: 'flex-start',
+    overflow: 'hidden',
     marginBottom: 6
+  },
+  // Üst üste binmeyi engellemek için her özelliği kendi View kutusuna alıyoruz
+  customFieldRow: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 3
   },
   customFieldText: {
     fontSize: 7,
     color: '#475569',
     textAlign: 'center',
-    marginBottom: 2,
-    lineHeight: 1.3
+    lineHeight: 1.2
   },
   customFieldLabel: {
     fontWeight: 'bold',
     color: '#0f172a'
   },
   
-  // FİYAT KUTUSU: Vurucu Zümrüt Yeşili ve Beyaz Yazı
   priceContainer: { 
-    backgroundColor: '#10b981', // Zümrüt yeşili
-    paddingVertical: 6,
-    paddingHorizontal: 20, // Daha geniş bir buton hissi
+    backgroundColor: '#10b981', 
+    paddingVertical: 5,
+    paddingHorizontal: 20, 
     borderRadius: 8, 
     alignItems: 'center',
-    marginTop: 'auto', // ASLA yukarıdaki metinle çakışmaz, en dibe yapışır
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 1 },
-    shadowRadius: 2
+    marginTop: 'auto', // En dibe yaslar
   },
   price: { 
     fontSize: 13, 
     fontWeight: 'bold', 
-    color: '#ffffff' // Beyaz renk
+    color: '#ffffff' 
   },
   
   pageNumber: {
@@ -173,14 +170,16 @@ const ProductCard = ({ product }) => (
         <Text style={styles.categoryBadge}>{product.kategori}</Text>
       ) : null}
 
-      {/* Ekstra özellikler uzun metin dahi olsa taşıp fiyatı bozamaz */}
       <View style={styles.customFieldsContainer}>
         {product.ekstraOzellikler && Object.entries(product.ekstraOzellikler).map(([key, val], idx) => (
           val ? (
-            <Text key={idx} style={styles.customFieldText} maxLines={3} textOverflow="ellipsis">
-              <Text style={styles.customFieldLabel}>{key}: </Text>
-              {val}
-            </Text>
+            // YENİ EKLENEN KISIM: Her metni bir View içine alarak üst üste binmelerini (overlap) engelledik
+            <View key={idx} style={styles.customFieldRow}>
+              <Text style={styles.customFieldText} maxLines={2} textOverflow="ellipsis">
+                <Text style={styles.customFieldLabel}>{key}: </Text>
+                {val}
+              </Text>
+            </View>
           ) : null
         ))}
       </View>
