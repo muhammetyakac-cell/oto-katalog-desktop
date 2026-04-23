@@ -18,7 +18,7 @@ const THEME_PRESETS = {
     code: '#334155',
     badgeBg: '#e0f2fe',
     badgeText: '#0284c7',
-    priceBg: '#10b981',
+    priceBg: '#303b38',
     priceText: '#ffffff',
     cardBorder: '#e2e8f0'
   },
