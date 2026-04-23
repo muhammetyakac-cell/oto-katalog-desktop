@@ -14,6 +14,8 @@ const styles = StyleSheet.create({
     height: 80 
   },
   logo: { width: 110, height: 60, objectFit: 'contain' },
+  // Logo yoksa sağdaki başlığın düzenini korumak için görünmez kutu
+  logoPlaceholder: { width: 110, height: 60 },
   catalogTitle: { fontSize: 18, fontWeight: 'bold', color: '#111827', textTransform: 'uppercase' },
   
   gridContainer: { 
@@ -35,14 +37,14 @@ const styles = StyleSheet.create({
   },
   
   imageContainer: {
-    height: 100, // Kategoriye yer açmak için azıcık kıstık
+    height: 90, // Ekstra alanlara yer açmak için azıcık daha kıstık
     width: '100%',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 4
   },
-  image: { width: 100, height: 100, objectFit: 'contain' },
+  image: { width: 90, height: 90, objectFit: 'contain' },
   
   contentBox: { width: '100%', alignItems: 'center' },
   title: { 
@@ -55,7 +57,6 @@ const styles = StyleSheet.create({
   },
   code: { fontSize: 8, color: '#6b7280', marginBottom: 4, fontStyle: 'italic' },
   
-  // YENİ: Kategori Etiketi Stili
   categoryBadge: {
     backgroundColor: '#eff6ff',
     color: '#3b82f6',
@@ -64,7 +65,26 @@ const styles = StyleSheet.create({
     fontSize: 7,
     fontWeight: 'bold',
     textTransform: 'uppercase',
-    marginBottom: 6
+    marginBottom: 4
+  },
+
+  // YENİ: Ekstra Özel Alan Kutucukları
+  customFieldsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 4,
+    marginBottom: 6,
+    height: 12 // Sabit yükseklik, taşmayı önler
+  },
+  customFieldBadge: {
+    backgroundColor: '#f3f4f6',
+    color: '#4b5563',
+    padding: '2 4',
+    borderRadius: 3,
+    fontSize: 6,
+    fontWeight: 'bold',
+    textTransform: 'uppercase'
   },
   
   priceContainer: { 
@@ -98,12 +118,18 @@ const ProductCard = ({ product }) => (
       <Text style={styles.title}>{product.urunAdi}</Text>
       <Text style={styles.code}>{product.stokKodu}</Text>
       
-      {/* KATEGORİ BASKISI BURADA */}
       {product.kategori ? (
         <Text style={styles.categoryBadge}>{product.kategori}</Text>
       ) : (
-        <View style={{ height: 14 }} /> /* Kategori yoksa hizalama bozulmasın diye boşluk */
+        <View style={{ height: 12 }} /> 
       )}
+
+      {/* YENİ: EKSTRA ALANLARIN BASILMASI */}
+      <View style={styles.customFieldsContainer}>
+        {product.ekstraOzellikler && Object.entries(product.ekstraOzellikler).map(([key, val], idx) => (
+          val ? <Text key={idx} style={styles.customFieldBadge}>{key}: {val}</Text> : null
+        ))}
+      </View>
 
       <View style={styles.priceContainer}>
         <Text style={styles.price}>{product.fiyat} TL</Text>
@@ -125,11 +151,7 @@ export const CatalogPDF = ({ products, projectName, logoUrl }) => {
     <Document>
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
-          {logoUrl ? (
-            <Image src={logoUrl} style={styles.logo} />
-          ) : (
-            <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#3b82f6' }}>DZY Katalog</Text>
-          )}
+          {logoUrl ? <Image src={logoUrl} style={styles.logo} /> : <View style={styles.logoPlaceholder} />}
           <Text style={styles.catalogTitle}>{projectName}</Text>
         </View>
 
