@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import { 
   UploadCloud, Settings2, CheckCircle2, Save, 
   RefreshCw, Download, ArrowLeft, Image as ImageIcon,
-  Edit2, ArrowLeftRight
+  Edit2, ArrowLeftRight, Trash2
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { PDFDownloadLink } from '@react-pdf/renderer';
@@ -26,11 +26,14 @@ export default function Editor() {
   const [pdfReady, setPdfReady] = useState(false);
   const [loading, setLoading] = useState(!!projectId);
 
-  // --- YENİ EKLENEN STATE'LER ---
   const [editingImageId, setEditingImageId] = useState(null);
   const [tempImageUrl, setTempImageUrl] = useState('');
   const [swap1, setSwap1] = useState('');
   const [swap2, setSwap2] = useState('');
+
+  // --- YENİ EKLENEN STATE'LER (Çoklu Seçim ve Toplu Kategori) ---
+  const [selectedIds, setSelectedIds] = useState([]);
+  const [bulkCategory, setBulkCategory] = useState('');
 
   // Proje Verisi Yükleme
   useEffect(() => {
@@ -114,7 +117,7 @@ export default function Editor() {
     } catch (error) { alert(error.message); } finally { setIsSaving(false); }
   };
 
-  // --- YENİ EKLENEN: Satır Değiştirme Fonksiyonu ---
+  // Satır Değiştirme Fonksiyonu
   const handleSwap = () => {
     const idx1 = parseInt(swap1) - 1;
     const idx2 = parseInt(swap2) - 1;
@@ -132,6 +135,34 @@ export default function Editor() {
     setProducts(newProducts);
     setSwap1('');
     setSwap2('');
+  };
+
+  // --- ÇOKLU SEÇİM VE AKILLI İŞLEM FONKSİYONLARI ---
+  const handleSelectAll = (e) => {
+    if (e.target.checked) setSelectedIds(products.map(p => p.id));
+    else setSelectedIds([]);
+  };
+
+  const handleSelectOne = (id) => {
+    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const handleApplyBulkCategory = () => {
+    if (!bulkCategory) return;
+    
+    if (selectedIds.length > 0) {
+      // Sadece seçili olanlara uygula
+      setProducts(products.map(p => selectedIds.includes(p.id) ? { ...p, kategori: bulkCategory } : p));
+    } else {
+      // Seçili yoksa tümüne uygula
+      setProducts(products.map(p => ({ ...p, kategori: bulkCategory })));
+    }
+  };
+
+  const handleDeleteSelected = () => {
+    if (!confirm(`${selectedIds.length} adet ürünü silmek istediğinize emin misiniz?`)) return;
+    setProducts(products.filter(p => !selectedIds.includes(p.id)));
+    setSelectedIds([]); // Silindikten sonra seçimi temizle
   };
 
   if (loading) return <div className="p-20 text-center font-bold text-blue-600">Taslak Yükleniyor...</div>;
@@ -177,11 +208,10 @@ export default function Editor() {
       {products.length > 0 && (
         <div className="space-y-6 relative">
           
-          {/* YAPISAL DEĞİŞİKLİK: 'sticky top-20 z-20' sınıflarını kaldırdık, artık en üstte sabit! */}
-          <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 mb-8">
-            <div className="flex flex-wrap items-end justify-between gap-8 mb-8">
+          <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 mb-8 sticky top-4 z-20">
+            <div className="flex flex-wrap items-end justify-between gap-6 mb-8">
               
-              <div className="flex items-center gap-6 flex-1">
+              <div className="flex items-center gap-6 flex-1 min-w-[300px]">
                 <div className="w-20 h-20 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden shadow-inner shrink-0">
                   {logoUrl ? <img src={logoUrl} className="w-full h-full object-contain" /> : <ImageIcon className="w-8 h-8 text-gray-300" />}
                 </div>
@@ -200,21 +230,50 @@ export default function Editor() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+              {/* ARAÇ ÇUBUĞU (Fiyat, Kategori ve Silme) */}
+              <div className="flex flex-wrap items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                {/* Fiyat Değişimi */}
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-gray-400 uppercase">Toplu Fiyat (%)</label>
                   <div className="flex gap-2">
-                    <input type="number" value={percentChange} onChange={(e) => setPercentChange(Number(e.target.value))} className="w-20 bg-white border border-gray-200 rounded-lg px-2 py-2 text-center font-bold outline-none" />
+                    <input type="number" value={percentChange} onChange={(e) => setPercentChange(Number(e.target.value))} className="w-16 bg-white border border-gray-200 rounded-lg px-2 py-2 text-center font-bold outline-none" />
                     <button onClick={() => {
                       setProducts(products.map(p => ({ ...p, fiyat: parseFloat((p.fiyat * (1 + percentChange / 100)).toFixed(2)) })));
                       setPercentChange(0);
-                    }} className="bg-green-500 text-white px-4 rounded-lg font-bold hover:bg-green-600 transition">Uygula</button>
+                    }} className="bg-green-500 text-white px-3 rounded-lg font-bold hover:bg-green-600 transition">Uygula</button>
                   </div>
                 </div>
+
+                {/* Akıllı Kategori Atama */}
+                <div className="space-y-1 border-l border-gray-200 pl-4">
+                  <label className="text-[10px] font-black text-blue-500 uppercase">
+                    {selectedIds.length > 0 ? `Seçililere Kategori (${selectedIds.length})` : 'Tümüne Kategori'}
+                  </label>
+                  <div className="flex gap-2">
+                    <select value={bulkCategory} onChange={(e) => setBulkCategory(e.target.value)} className="w-32 bg-white border border-gray-200 rounded-lg px-2 py-2 text-sm font-bold outline-none">
+                      <option value="">Seçiniz...</option>
+                      <option value="Egzoz Ucu">Egzoz Ucu</option>
+                      <option value="Varex">Varex</option>
+                      <option value="Downpipe">Downpipe</option>
+                      <option value="OEM Susturucu">OEM Susturucu</option>
+                    </select>
+                    <button onClick={handleApplyBulkCategory} className="bg-blue-600 text-white px-3 rounded-lg font-bold hover:bg-blue-700 transition">Uygula</button>
+                  </div>
+                </div>
+
+                {/* Seçilileri Sil Butonu (Sadece Seçim Varsa Görünür) */}
+                {selectedIds.length > 0 && (
+                  <div className="space-y-1 border-l border-gray-200 pl-4">
+                    <label className="text-[10px] font-black text-red-500 uppercase tracking-wider">Silme İşlemi</label>
+                    <button onClick={handleDeleteSelected} className="bg-red-500 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-600 transition flex items-center gap-1 h-[38px]">
+                      <Trash2 className="w-4 h-4" /> SİL
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
-            <div className="flex gap-4 justify-end items-center pt-6 border-t border-gray-50">
+            <div className="flex gap-4 justify-end items-center pt-6 border-t border-gray-100">
               <button onClick={saveToDatabase} disabled={isSaving} className="flex items-center gap-2 px-8 py-3 rounded-2xl font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
                 <Save className="w-5 h-5" /> {isSaving ? 'Kaydediliyor...' : 'Taslağı Kaydet'}
               </button>
@@ -239,6 +298,14 @@ export default function Editor() {
             <table className="w-full text-left">
               <thead>
                 <tr className="bg-gray-50/50 text-gray-400 text-[10px] font-black uppercase tracking-widest border-b">
+                  <th className="p-6 w-16 text-center">
+                    <input 
+                      type="checkbox" 
+                      className="w-4 h-4 cursor-pointer accent-blue-600"
+                      onChange={handleSelectAll}
+                      checked={products.length > 0 && selectedIds.length === products.length}
+                    />
+                  </th>
                   <th className="p-6">Sıra & Ürün Detayı</th>
                   <th className="p-6 w-40 text-center">Birim Fiyat</th>
                   <th className="p-6 w-56">Kategori</th>
@@ -246,13 +313,21 @@ export default function Editor() {
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {products.map((product, index) => (
-                  <tr key={product.id} className="hover:bg-blue-50/5 transition-colors">
-                    <td className="p-6 flex items-center gap-6">
-                      
-                      {/* SATIR NUMARASI EKLENDİ */}
-                      <span className="font-black text-gray-200 text-2xl w-10 text-right">#{index + 1}</span>
+                  <tr key={product.id} className={`transition-colors ${selectedIds.includes(product.id) ? 'bg-blue-50/40' : 'hover:bg-blue-50/5'}`}>
+                    
+                    {/* SEÇİM KUTUSU */}
+                    <td className="p-6 text-center">
+                      <input 
+                        type="checkbox" 
+                        className="w-4 h-4 cursor-pointer accent-blue-600"
+                        checked={selectedIds.includes(product.id)}
+                        onChange={() => handleSelectOne(product.id)}
+                      />
+                    </td>
 
-                      {/* GÜNCEL FOTOĞRAF DÜZENLEME ALANI */}
+                    <td className="p-6 flex items-center gap-6">
+                      <span className="font-black text-gray-200 text-2xl w-8 text-right">#{index + 1}</span>
+
                       <div className="flex flex-col items-center gap-2">
                         <div className="w-32 h-32 bg-white rounded-2xl border border-gray-100 shadow-sm p-2 flex-shrink-0">
                           <img src={product.resimUrl} className="w-full h-full object-contain" onError={(e) => { e.target.src = "https://via.placeholder.com/150?text=Hata"; }} />
@@ -278,19 +353,13 @@ export default function Editor() {
                               >
                                 Güncelle
                               </button>
-                              <button 
-                                onClick={() => setEditingImageId(null)} 
-                                className="text-[10px] font-bold bg-gray-200 text-gray-600 px-2 py-1 rounded-md hover:bg-gray-300 transition"
-                              >
+                              <button onClick={() => setEditingImageId(null)} className="text-[10px] font-bold bg-gray-200 text-gray-600 px-2 py-1 rounded-md hover:bg-gray-300 transition">
                                 İptal
                               </button>
                             </div>
                           </div>
                         ) : (
-                          <button 
-                            onClick={() => { setEditingImageId(product.id); setTempImageUrl(''); }} 
-                            className="text-[10px] font-bold text-blue-500 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded-full transition"
-                          >
+                          <button onClick={() => { setEditingImageId(product.id); setTempImageUrl(''); }} className="text-[10px] font-bold text-blue-500 hover:text-blue-700 flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded-full transition">
                             <Edit2 className="w-3 h-3" /> Foto Değiştir
                           </button>
                         )}
@@ -319,34 +388,16 @@ export default function Editor() {
             </table>
           </div>
 
-          {/* YÜZEN (FLOATING) SATIR DEĞİŞTİRME ARACI */}
           <div className="fixed bottom-8 right-8 bg-white/95 backdrop-blur-md p-5 rounded-3xl shadow-2xl border border-gray-100 flex flex-col gap-3 z-50">
             <div className="flex items-center gap-2 mb-1">
               <ArrowLeftRight className="w-4 h-4 text-blue-600" />
               <h4 className="text-xs font-black text-gray-700 uppercase tracking-widest">Sıralama Değiştir</h4>
             </div>
             <div className="flex items-center gap-3">
-              <input 
-                type="number" 
-                value={swap1} 
-                onChange={(e) => setSwap1(e.target.value)} 
-                placeholder="Satır" 
-                className="w-16 border-2 border-gray-100 rounded-xl px-2 py-2 text-sm font-bold text-center outline-none focus:border-blue-500" 
-              />
+              <input type="number" value={swap1} onChange={(e) => setSwap1(e.target.value)} placeholder="Satır" className="w-16 border-2 border-gray-100 rounded-xl px-2 py-2 text-sm font-bold text-center outline-none focus:border-blue-500" />
               <span className="text-xs font-bold text-gray-400 uppercase">ile</span>
-              <input 
-                type="number" 
-                value={swap2} 
-                onChange={(e) => setSwap2(e.target.value)} 
-                placeholder="Satır" 
-                className="w-16 border-2 border-gray-100 rounded-xl px-2 py-2 text-sm font-bold text-center outline-none focus:border-blue-500" 
-              />
-              <button 
-                onClick={handleSwap} 
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-black transition-colors"
-              >
-                DEĞİŞTİR
-              </button>
+              <input type="number" value={swap2} onChange={(e) => setSwap2(e.target.value)} placeholder="Satır" className="w-16 border-2 border-gray-100 rounded-xl px-2 py-2 text-sm font-bold text-center outline-none focus:border-blue-500" />
+              <button onClick={handleSwap} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-black transition-colors">DEĞİŞTİR</button>
             </div>
           </div>
 
