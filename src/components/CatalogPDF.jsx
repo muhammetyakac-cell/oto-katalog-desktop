@@ -4,7 +4,6 @@ import { Page, Text, View, Document, StyleSheet, Image } from '@react-pdf/render
 const styles = StyleSheet.create({
   page: { padding: 40, backgroundColor: '#ffffff' },
   
-  // İlk sayfa için başlık alanı
   header: { 
     flexDirection: 'row', 
     justifyContent: 'space-between', 
@@ -12,55 +11,62 @@ const styles = StyleSheet.create({
     marginBottom: 30, 
     borderBottom: '2pt solid #f3f4f6', 
     paddingBottom: 10,
-    height: 80 // Sabit yükseklik
+    height: 80 
   },
   logo: { width: 110, height: 60, objectFit: 'contain' },
   catalogTitle: { fontSize: 18, fontWeight: 'bold', color: '#111827', textTransform: 'uppercase' },
   
-  // Izgara Düzeni
   gridContainer: { 
     flexDirection: 'row', 
     flexWrap: 'wrap', 
     justifyContent: 'space-between' 
   },
   
-  // Ürün Kartı (Sabit Boyutlu - Asla Kesilmez)
   productCard: {
-    width: '48%', // 2 Sütun
-    height: 230, // 3 satırın A4'e tam sığması için hesaplanmış ideal yükseklik
+    width: '48%', 
+    height: 230, 
     marginBottom: 20,
     padding: 12,
     border: '1pt solid #f3f4f6',
     borderRadius: 8,
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'space-between' // İçeriği eşit dağıtır, fiyat hep en altta kalır
+    justifyContent: 'space-between' 
   },
   
-  // Görsel Alanı
   imageContainer: {
-    height: 110,
+    height: 100, // Kategoriye yer açmak için azıcık kıstık
     width: '100%',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 8
+    marginBottom: 4
   },
-  image: { width: 110, height: 110, objectFit: 'contain' },
+  image: { width: 100, height: 100, objectFit: 'contain' },
   
-  // Metin Alanı
   contentBox: { width: '100%', alignItems: 'center' },
   title: { 
     fontSize: 11, 
     fontWeight: 'bold', 
     textAlign: 'center', 
     color: '#1f2937', 
-    marginBottom: 4,
-    height: 28 // Uzun isimler aşağıyı ittirmesin diye sabit yükseklik
+    marginBottom: 2,
+    height: 26 
   },
-  code: { fontSize: 8, color: '#6b7280', marginBottom: 8, fontStyle: 'italic' },
+  code: { fontSize: 8, color: '#6b7280', marginBottom: 4, fontStyle: 'italic' },
   
-  // Fiyat Alanı
+  // YENİ: Kategori Etiketi Stili
+  categoryBadge: {
+    backgroundColor: '#eff6ff',
+    color: '#3b82f6',
+    padding: '2 6',
+    borderRadius: 4,
+    fontSize: 7,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    marginBottom: 6
+  },
+  
   priceContainer: { 
     backgroundColor: '#f9fafb', 
     padding: '6 16', 
@@ -70,7 +76,6 @@ const styles = StyleSheet.create({
   },
   price: { fontSize: 13, fontWeight: 'heavy', color: '#111827' },
   
-  // Sayfa Numarası
   pageNumber: {
     position: 'absolute',
     fontSize: 10,
@@ -82,7 +87,6 @@ const styles = StyleSheet.create({
   },
 });
 
-// Tekil Ürün Kartı Bileşeni (Kodu temiz tutmak için)
 const ProductCard = ({ product }) => (
   <View style={styles.productCard} wrap={false}>
     <View style={styles.imageContainer}>
@@ -93,6 +97,14 @@ const ProductCard = ({ product }) => (
     <View style={styles.contentBox}>
       <Text style={styles.title}>{product.urunAdi}</Text>
       <Text style={styles.code}>{product.stokKodu}</Text>
+      
+      {/* KATEGORİ BASKISI BURADA */}
+      {product.kategori ? (
+        <Text style={styles.categoryBadge}>{product.kategori}</Text>
+      ) : (
+        <View style={{ height: 14 }} /> /* Kategori yoksa hizalama bozulmasın diye boşluk */
+      )}
+
       <View style={styles.priceContainer}>
         <Text style={styles.price}>{product.fiyat} TL</Text>
       </View>
@@ -101,22 +113,16 @@ const ProductCard = ({ product }) => (
 );
 
 export const CatalogPDF = ({ products, projectName, logoUrl }) => {
-  // MATEMATİKSEL BÖLME İŞLEMİ (CHUNKING)
-  // 1. İlk sayfaya sadece ilk 4 ürünü alıyoruz (Çünkü Logo/Başlık yer kaplıyor)
   const firstPageProducts = products.slice(0, 4);
-  
-  // 2. Geriye kalan ürünleri ayırıyoruz
   const remainingProducts = products.slice(4);
-  
-  // 3. Geri kalanları tam 6'şarlı gruplara bölüyoruz
   const otherPages = [];
+  
   for (let i = 0; i < remainingProducts.length; i += 6) {
     otherPages.push(remainingProducts.slice(i, i + 6));
   }
 
   return (
     <Document>
-      {/* İLK SAYFA: Başlık + 4 Ürün */}
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
           {logoUrl ? (
@@ -132,11 +138,9 @@ export const CatalogPDF = ({ products, projectName, logoUrl }) => {
             <ProductCard key={product.id || index} product={product} />
           ))}
         </View>
-        
         <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
       </Page>
 
-      {/* DİĞER SAYFALAR: Sadece 6 Ürün (Başlık Yok) */}
       {otherPages.map((pageGroup, pageIndex) => (
         <Page key={pageIndex} size="A4" style={styles.page}>
           <View style={[styles.gridContainer, { marginTop: 10 }]}>
@@ -144,7 +148,6 @@ export const CatalogPDF = ({ products, projectName, logoUrl }) => {
               <ProductCard key={product.id || index} product={product} />
             ))}
           </View>
-          
           <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => `${pageNumber} / ${totalPages}`} fixed />
         </Page>
       ))}

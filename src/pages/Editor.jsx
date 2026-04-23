@@ -31,11 +31,11 @@ export default function Editor() {
   const [swap1, setSwap1] = useState('');
   const [swap2, setSwap2] = useState('');
 
-  // --- YENİ EKLENEN STATE'LER (Çoklu Seçim ve Toplu Kategori) ---
+  // Seçim State'leri
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkCategory, setBulkCategory] = useState('');
+  const [lastSelectedIndex, setLastSelectedIndex] = useState(null); // Shift+Click için hafıza
 
-  // Proje Verisi Yükleme
   useEffect(() => {
     if (projectId) {
       const loadData = async () => {
@@ -61,7 +61,6 @@ export default function Editor() {
     }
   }, [projectId]);
 
-  // Değişiklik olunca PDF'i sıfırla
   useEffect(() => {
     setPdfReady(false);
   }, [products, projectName, logoUrl]);
@@ -117,7 +116,6 @@ export default function Editor() {
     } catch (error) { alert(error.message); } finally { setIsSaving(false); }
   };
 
-  // Satır Değiştirme Fonksiyonu
   const handleSwap = () => {
     const idx1 = parseInt(swap1) - 1;
     const idx2 = parseInt(swap2) - 1;
@@ -137,24 +135,44 @@ export default function Editor() {
     setSwap2('');
   };
 
-  // --- ÇOKLU SEÇİM VE AKILLI İŞLEM FONKSİYONLARI ---
   const handleSelectAll = (e) => {
     if (e.target.checked) setSelectedIds(products.map(p => p.id));
     else setSelectedIds([]);
   };
 
-  const handleSelectOne = (id) => {
-    setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  // YENİ: Shift + Click Çoklu Seçim Mantığı
+  const handleSelectOne = (e, id, currentIndex) => {
+    if (e.nativeEvent.shiftKey && lastSelectedIndex !== null) {
+      const start = Math.min(lastSelectedIndex, currentIndex);
+      const end = Math.max(lastSelectedIndex, currentIndex);
+      
+      const rangeIds = products.slice(start, end + 1).map(p => p.id);
+      
+      if (e.target.checked) {
+        // Aralığı ekle
+        setSelectedIds(prev => [...new Set([...prev, ...rangeIds])]);
+      } else {
+        // Aralığı çıkar
+        setSelectedIds(prev => prev.filter(x => !rangeIds.includes(x)));
+      }
+    } else {
+      // Normal Seçim
+      if (selectedIds.includes(id)) {
+        setSelectedIds(prev => prev.filter(x => x !== id));
+      } else {
+        setSelectedIds(prev => [...prev, id]);
+      }
+    }
+    // Son tıklananı hafızaya al
+    setLastSelectedIndex(currentIndex);
   };
 
   const handleApplyBulkCategory = () => {
     if (!bulkCategory) return;
     
     if (selectedIds.length > 0) {
-      // Sadece seçili olanlara uygula
       setProducts(products.map(p => selectedIds.includes(p.id) ? { ...p, kategori: bulkCategory } : p));
     } else {
-      // Seçili yoksa tümüne uygula
       setProducts(products.map(p => ({ ...p, kategori: bulkCategory })));
     }
   };
@@ -162,7 +180,8 @@ export default function Editor() {
   const handleDeleteSelected = () => {
     if (!confirm(`${selectedIds.length} adet ürünü silmek istediğinize emin misiniz?`)) return;
     setProducts(products.filter(p => !selectedIds.includes(p.id)));
-    setSelectedIds([]); // Silindikten sonra seçimi temizle
+    setSelectedIds([]); 
+    setLastSelectedIndex(null);
   };
 
   if (loading) return <div className="p-20 text-center font-bold text-blue-600">Taslak Yükleniyor...</div>;
@@ -208,7 +227,7 @@ export default function Editor() {
       {products.length > 0 && (
         <div className="space-y-6 relative">
           
-          <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 mb-8 sticky top-4 z-20">
+          <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 mb-8">
             <div className="flex flex-wrap items-end justify-between gap-6 mb-8">
               
               <div className="flex items-center gap-6 flex-1 min-w-[300px]">
@@ -230,9 +249,7 @@ export default function Editor() {
                 </div>
               </div>
 
-              {/* ARAÇ ÇUBUĞU (Fiyat, Kategori ve Silme) */}
               <div className="flex flex-wrap items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
-                {/* Fiyat Değişimi */}
                 <div className="space-y-1">
                   <label className="text-[10px] font-black text-gray-400 uppercase">Toplu Fiyat (%)</label>
                   <div className="flex gap-2">
@@ -244,7 +261,6 @@ export default function Editor() {
                   </div>
                 </div>
 
-                {/* Akıllı Kategori Atama */}
                 <div className="space-y-1 border-l border-gray-200 pl-4">
                   <label className="text-[10px] font-black text-blue-500 uppercase">
                     {selectedIds.length > 0 ? `Seçililere Kategori (${selectedIds.length})` : 'Tümüne Kategori'}
@@ -261,7 +277,6 @@ export default function Editor() {
                   </div>
                 </div>
 
-                {/* Seçilileri Sil Butonu (Sadece Seçim Varsa Görünür) */}
                 {selectedIds.length > 0 && (
                   <div className="space-y-1 border-l border-gray-200 pl-4">
                     <label className="text-[10px] font-black text-red-500 uppercase tracking-wider">Silme İşlemi</label>
@@ -315,13 +330,12 @@ export default function Editor() {
                 {products.map((product, index) => (
                   <tr key={product.id} className={`transition-colors ${selectedIds.includes(product.id) ? 'bg-blue-50/40' : 'hover:bg-blue-50/5'}`}>
                     
-                    {/* SEÇİM KUTUSU */}
                     <td className="p-6 text-center">
                       <input 
                         type="checkbox" 
                         className="w-4 h-4 cursor-pointer accent-blue-600"
                         checked={selectedIds.includes(product.id)}
-                        onChange={() => handleSelectOne(product.id)}
+                        onChange={(e) => handleSelectOne(e, product.id, index)}
                       />
                     </td>
 
