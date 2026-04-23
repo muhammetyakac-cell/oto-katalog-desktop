@@ -1,7 +1,7 @@
 import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Image, Font } from '@react-pdf/renderer';
 
-// Türkçe karakter desteği için Roboto
+// Türkçe karakter desteği için stabil Roboto fontları
 Font.register({
   family: 'Roboto',
   fonts: [
@@ -14,7 +14,7 @@ Font.register({
 const styles = StyleSheet.create({
   page: { 
     paddingTop: 30, 
-    paddingBottom: 20, 
+    paddingBottom: 35, // Tam 1.2 cm civarına denk gelir
     paddingHorizontal: 35,
     backgroundColor: '#ffffff', 
     fontFamily: 'Roboto' 
@@ -41,12 +41,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between'
   },
   
-  // KUTUCUK YÜKSEKLİĞİ: 215pt olarak güncellendi. (3 satır x 215 = 645pt. Header ve boşluklarla A4'e tam sığar)
+  // Kutucuk yüksekliği milimetrik hesaplandı. (242 * 3) + boşluklar = A4'e kusursuz oturur.
   productCard: {
     width: '49%', 
-    height: 215, 
-    marginBottom: 12, 
-    padding: 8,
+    height: 242, 
+    marginBottom: 15, 
+    padding: 10,
     borderWidth: 1,
     borderColor: '#e2e8f0', 
     borderStyle: 'solid',
@@ -57,14 +57,14 @@ const styles = StyleSheet.create({
   },
   
   imageContainer: {
-    height: 75, // Resim alanı metinlere yer açmak için optimize edildi
+    height: 85,
     width: '100%',
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 4 
+    marginBottom: 6 
   },
-  image: { width: 75, height: 75, objectFit: 'contain' },
+  image: { width: 85, height: 85, objectFit: 'contain' },
   
   contentBox: { 
     width: '100%', 
@@ -73,51 +73,61 @@ const styles = StyleSheet.create({
   },
   
   title: { 
-    fontSize: 9.5, 
+    fontSize: 10, 
     fontWeight: 'bold', 
     textAlign: 'center', 
     color: '#1e3a8a', 
-    marginBottom: 1,
-    height: 22, // 2 satıra kadar izin verir
-    lineHeight: 1.1
+    marginBottom: 3,
+    maxLines: 2, 
+    textOverflow: 'ellipsis'
+  },
+
+  // 3. Ekstra Sütun için ürün adı altı özel alan
+  topExtraText: {
+    fontSize: 7.5,
+    color: '#475569',
+    textAlign: 'center',
+    marginBottom: 3,
+    paddingHorizontal: 4,
+    lineHeight: 1.2
   },
   
   code: { 
-    fontSize: 7.5, 
+    fontSize: 8, 
     color: '#64748b', 
-    marginBottom: 3, 
+    marginBottom: 4, 
     fontStyle: 'italic' 
   },
   
   categoryBadge: {
     backgroundColor: '#e0f2fe',
     color: '#0284c7',
-    paddingVertical: 2,
-    paddingHorizontal: 6,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
     borderRadius: 8,
-    fontSize: 6.5,
+    fontSize: 7,
     fontWeight: 'bold',
     textTransform: 'uppercase',
-    marginBottom: 4
+    marginBottom: 5
   },
 
-  // ÖZEL ALANLAR: Üst üste binmeyi engellemek için dikey liste yapısı
-  customFieldsContainer: {
+  // Alt kısımda kalacak maksimum 2 ekstra alan için
+  bottomFieldsContainer: {
     width: '100%',
     alignItems: 'center',
-    height: 45, // 3 sütun için sabit dikey alan ayrıldı
     justifyContent: 'center',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    marginBottom: 4
   },
   customFieldRow: {
     width: '100%',
-    marginBottom: 1
+    marginBottom: 2
   },
   customFieldText: {
     fontSize: 7,
     color: '#475569',
     textAlign: 'center',
-    lineHeight: 1.1
+    lineHeight: 1.2
   },
   customFieldLabel: {
     fontWeight: 'bold',
@@ -126,15 +136,14 @@ const styles = StyleSheet.create({
   
   priceContainer: { 
     backgroundColor: '#10b981', 
-    paddingVertical: 4,
-    paddingHorizontal: 15, 
+    paddingVertical: 5,
+    paddingHorizontal: 20, 
     borderRadius: 6, 
     alignItems: 'center',
-    marginTop: 'auto', // En dibe yaslanır
-    width: '80%'
+    marginTop: 'auto', 
   },
   price: { 
-    fontSize: 11, 
+    fontSize: 12, 
     fontWeight: 'bold', 
     color: '#ffffff' 
   },
@@ -142,7 +151,7 @@ const styles = StyleSheet.create({
   pageNumber: {
     position: 'absolute',
     fontSize: 8,
-    bottom: 10,
+    bottom: 12,
     left: 0,
     right: 0,
     textAlign: 'center',
@@ -150,46 +159,67 @@ const styles = StyleSheet.create({
   },
 });
 
-const ProductCard = ({ product }) => (
-  <View style={styles.productCard} wrap={false}>
-    <View style={styles.imageContainer}>
-      {product.resimUrl && (
-        <Image src={product.resimUrl} style={styles.image} />
-      )}
-    </View>
-    <View style={styles.contentBox}>
-      <Text style={styles.title} maxLines={2}>
-        {product.urunAdi}
-      </Text>
-      
-      <Text style={styles.code}>{product.stokKodu}</Text>
-      
-      {product.kategori ? (
-        <Text style={styles.categoryBadge}>{product.kategori}</Text>
-      ) : null}
+const ProductCard = ({ product }) => {
+  // Ekstra özellikleri filtreleyip diziye çeviriyoruz
+  const extras = Object.entries(product.ekstraOzellikler || {}).filter(([key, val]) => val);
+  
+  // 3. Özellik (Eğer varsa)
+  const topExtra = extras.length > 2 ? extras[2] : null;
+  // İlk 2 Özellik
+  const bottomExtras = extras.length > 2 ? extras.slice(0, 2) : extras;
 
-      <View style={styles.customFieldsContainer}>
-        {product.ekstraOzellikler && Object.entries(product.ekstraOzellikler).map(([key, val], idx) => (
-          val ? (
+  return (
+    <View style={styles.productCard} wrap={false}>
+      <View style={styles.imageContainer}>
+        {product.resimUrl && (
+          <Image src={product.resimUrl} style={styles.image} />
+        )}
+      </View>
+      
+      <View style={styles.contentBox}>
+        {/* 1. Ürün Adı */}
+        <Text style={styles.title} maxLines={2} textOverflow="ellipsis">
+          {product.urunAdi}
+        </Text>
+        
+        {/* 2. (YENİ) 3. Ekstra Alan Ürün Adının Hemen Altında */}
+        {topExtra && (
+          <Text style={styles.topExtraText} maxLines={2} textOverflow="ellipsis">
+            <Text style={{ fontWeight: 'bold', color: '#0f172a' }}>{topExtra[0]}: </Text>
+            {topExtra[1]}
+          </Text>
+        )}
+        
+        {/* 3. Stok Kodu */}
+        <Text style={styles.code}>{product.stokKodu}</Text>
+        
+        {/* 4. Kategori */}
+        {product.kategori ? (
+          <Text style={styles.categoryBadge}>{product.kategori}</Text>
+        ) : null}
+
+        {/* 5. İlk 2 Ekstra Alan (Alt Kısımda) */}
+        <View style={styles.bottomFieldsContainer}>
+          {bottomExtras.map(([key, val], idx) => (
             <View key={idx} style={styles.customFieldRow}>
-              <Text style={styles.customFieldText} maxLines={1}>
+              <Text style={styles.customFieldText} maxLines={1} textOverflow="ellipsis">
                 <Text style={styles.customFieldLabel}>{key}: </Text>
                 {val}
               </Text>
             </View>
-          ) : null
-        ))}
-      </View>
+          ))}
+        </View>
 
-      <View style={styles.priceContainer}>
-        <Text style={styles.price}>{product.fiyat} TL</Text>
+        {/* 6. Fiyat (Her Zaman En Altta) */}
+        <View style={styles.priceContainer}>
+          <Text style={styles.price}>{product.fiyat} TL</Text>
+        </View>
       </View>
     </View>
-  </View>
-);
+  );
+};
 
 export const CatalogPDF = ({ products, projectName, logoUrl }) => {
-  // Matematiksel Chunking
   const firstPageProducts = products.slice(0, 4);
   const remainingProducts = products.slice(4);
   const otherPages = [];
