@@ -125,7 +125,15 @@ function App() {
       }
     } catch (error) {
       console.error("Hata:", error);
-      alert(`Güncelleme kontrolü başarısız: ${error.toString()}`);
+      const message = error?.toString?.() || "Bilinmeyen hata";
+      if (message.toLowerCase().includes("signature verification failed")) {
+        alert(
+          "Güncelleme kontrolü başarısız: İndirilen paketin imzası doğrulanamadı.\n\n" +
+          "Sunucudaki dosya ile imza (.sig) eşleşmiyor veya yanlış platform kaydı dönüyor olabilir."
+        );
+      } else {
+        alert(`Güncelleme kontrolü başarısız: ${message}`);
+      }
     } finally {
       setIsChecking(false);
     }
