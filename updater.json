@@ -4,12 +4,12 @@
   "pub_date": "2026-04-24T12:00:00Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUTVA4cFFJVExpRlZoVy9GcFFVQTFZY25lbnVER0UwaXV1ZUdORzJEa3c5RnN1N2hNZ2Z5U1lmUm5LaWlwa0RFbUp4cEN1VndGdHN4MEFac0pjNDJTOUFZd05PbmFCTnc0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3MTQwNzU2CWZpbGU6b3RvLWthdGFsb2dfMC4xLjhfeDY0LXNldHVwLmV4ZQpBUlJKUzZ1V0FqdVFYbVBsZ1N1Si8zVlp4dFhzQ2ZuU2t1Snk3Si9JMSs0TnBxa1pLYWdxN1I2bkFSRTlWNEJLWU1JbmZVQ0dWdk9PajBZTmNCWFhBUT09Cg==",
-      "url": "https://github.com/muhammetyakac-cell/oto-katalog-desktop/releases/download/v0.1.8/oto-katalog_0.1.8_x64_en-US.msi"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUTVA4cFFJVExpRld6WGJERHVUTnArT1lqZ05pWXptUDBxTmM4Y25rYmgrK1g1TElIZUFNa1FqNXQ0RnN2WjMzLzJ1U0JHbkowNkE1VDhmU2t5dnA0akdEbTZremFhOUFFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3MTQyMTU4CWZpbGU6b3RvLWthdGFsb2dfMC4yLjBfeDY0X2VuLVVTLm1zaQpZVkZRazFySDROaHMvQlZNaTgzQVBSV0xwdjllUFNDY2tRZUZUV3VYenRQbmwwWmU1SzZmSVl6S0RXNG9mS0QyYzRSVUZ4Rnp3bHFlRnZ4MUFFdURBdz09Cg==",
+      "url": "https://github.com/muhammetyakac-cell/oto-katalog-desktop/releases/download/v0.2.0/oto-katalog_0.2.0_x64_en-US.msi"
     },
     "windows-x86_64-msi": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUTVA4cFFJVExpRlZoVy9GcFFVQTFZY25lbnVER0UwaXV1ZUdORzJEa3c5RnN1N2hNZ2Z5U1lmUm5LaWlwa0RFbUp4cEN1VndGdHN4MEFac0pjNDJTOUFZd05PbmFCTnc0PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3MTQwNzU2CWZpbGU6b3RvLWthdGFsb2dfMC4xLjhfeDY0LXNldHVwLmV4ZQpBUlJKUzZ1V0FqdVFYbVBsZ1N1Si8zVlp4dFhzQ2ZuU2t1Snk3Si9JMSs0TnBxa1pLYWdxN1I2bkFSRTlWNEJLWU1JbmZVQ0dWdk9PajBZTmNCWFhBUT09Cg==",
-      "url": "https://github.com/muhammetyakac-cell/oto-katalog-desktop/releases/download/v0.1.8/oto-katalog_0.1.8_x64_en-US.msi"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUTVA4cFFJVExpRld6WGJERHVUTnArT1lqZ05pWXptUDBxTmM4Y25rYmgrK1g1TElIZUFNa1FqNXQ0RnN2WjMzLzJ1U0JHbkowNkE1VDhmU2t5dnA0akdEbTZremFhOUFFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3MTQyMTU4CWZpbGU6b3RvLWthdGFsb2dfMC4yLjBfeDY0X2VuLVVTLm1zaQpZVkZRazFySDROaHMvQlZNaTgzQVBSV0xwdjllUFNDY2tRZUZUV3VYenRQbmwwWmU1SzZmSVl6S0RXNG9mS0QyYzRSVUZ4Rnp3bHFlRnZ4MUFFdURBdz09Cg==",
+      "url": "https://github.com/muhammetyakac-cell/oto-katalog-desktop/releases/download/v0.2.0/oto-katalog_0.2.0_x64_en-US.msi"
     }
   }
 }
