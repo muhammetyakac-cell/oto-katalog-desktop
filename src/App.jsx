@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Play, Pause, Volume2, Radio } from 'lucide-react';
-// Tauri v2 için gerekli updater ve process importları
+
+// TAURI V2 DOĞRU IMPORT YOLLARI
 import { check } from '@tauri-apps/plugin-updater';
-import { relaunch } from '@tauri-apps/api/process';
+import { relaunch } from '@tauri-apps/plugin-process'; // Burası değişti!
 
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -98,35 +99,23 @@ function RadioPlayer() {
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(sessionStorage.getItem('isAuth') === 'true');
 
-  // --- GÜNCELLEME KONTROL SİSTEMİ ---
   useEffect(() => {
     async function setupUpdater() {
       try {
-        // Yeni bir sürüm var mı kontrol et
         const update = await check();
-        
         if (update) {
-          console.log(`Yeni sürüm bulundu: v${update.version}`);
-          
-          // Kullanıcıya güncelleme bildirimi çıkar
           const confirmUpdate = window.confirm(
             `Yeni bir güncelleme mevcut (v${update.version}). Şimdi yükleyip yeniden başlatmak ister misiniz?`
           );
-
           if (confirmUpdate) {
-            // Önce güncellemeyi indir ve kur
             await update.downloadAndInstall();
-            // Sonra uygulamayı yeni sürümle tekrar aç
-            await relaunch();
+            await relaunch(); // Artık plugin-process üzerinden çalışacak
           }
-        } else {
-          console.log("Uygulama zaten en son sürümde.");
         }
       } catch (error) {
         console.error("Güncelleme hatası:", error);
       }
     }
-
     setupUpdater();
   }, []);
 
@@ -152,7 +141,6 @@ function App() {
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-
         <RadioPlayer />
       </div>
     </BrowserRouter>
