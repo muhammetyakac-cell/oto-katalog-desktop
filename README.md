@@ -69,3 +69,17 @@ React Router'ın Vercel'de düzgün çalışması (sayfa yenilendiğinde 404 ver
 Plaintext
 /* /index.html 200
 Bu sistem, DZY Yazılım güvencesiyle yüksek performanslı katalog yönetimi sağlamak için tasarlanmıştır.
+
+## Desktop Release ve `.sig` Dosyası
+
+Tauri updater'ın çalışması için release çıktısında imza (`.sig`) dosyası olmalıdır. Bu repo'da `src-tauri/tauri.conf.json` içinde:
+
+- `"bundle.createUpdaterArtifacts": true`
+
+olarak ayarlanmıştır. Bu sayede `tauri build` sırasında updater için gerekli arşiv ve imza dosyaları (`.zip`, `.sig`) üretilir.
+
+Örnek komut:
+
+```bash
+npx tauri build
+```
