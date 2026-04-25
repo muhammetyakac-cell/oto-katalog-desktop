@@ -3,7 +3,7 @@
   "notes": "Otomatik güncelleme sistemi ve radyo modülü eklendi.",
   "pub_date": "2026-04-25T19:00:00Z",
   "platforms": {
-    "windows-x86_64": {
+    "win64": {
       "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUTVA4cFFJVExpRlZvdXYrUkkzSlhVK2Frb0dmUjd4T0hQUmpuQXRINkJ0N1EzbVZRbEpRV0RZYklhMUVITXc2YVlINURrRlJ2SElxVmFjelRFWWttanFBSmtTUVRsb3c4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3MTM0MTg1CWZpbGU6b3RvLWthdGFsb2dfMC4xLjdfeDY0X2VuLVVTLm1zaQpYeDVOcVYzRG81S0pUc1FqeTcvY0xLZmNiMmpUU1RkUXJVVmlXZWZuekgzM0VrU2NsYnljcWMzcHphMnMrWmlXeXM5VkV1M2JZZmlMVUk5ZHNQVDdCUT09Cg==",
       "url": "https://github.com/muhammetyakac-cell/oto-katalog-desktop/releases/download/v0.1.7/oto-katalog_0.1.7_x64_en-US.msi"
     }
