@@ -1,13 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Play, Pause, Volume2, Radio } from 'lucide-react';
+// Tauri v2 için gerekli updater ve process importları
+import { check } from '@tauri-apps/plugin-updater';
+import { relaunch } from '@tauri-apps/api/process';
+
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Editor from './pages/Editor';
 
-// --- RADYO İSTASYONLARI (Kendi listenle güncellendi) ---
+// --- RADYO İSTASYONLARI ---
 const STATIONS = [
-
   { name: 'Arabesk FM (Arabesk)', url: 'http://anadolu.liderhost.com.tr:6688/;' },
   { name: "Power FM", genre: "Yabancı Pop", url: "https://listen.powerapp.com.tr/powerfm/abr/powerfm/128/playlist.m3u8", type: "m3u8" },
   { name: "PowerTürk", genre: "Türkçe Pop", url: "https://listen.powerapp.com.tr/powerturk/abr/powerturk/128/playlist.m3u8", type: "m3u8" },
@@ -20,10 +23,6 @@ const STATIONS = [
   { name: "90'lar", genre: "90'lar", url: "https://moondigitalmaster.radyotvonline.net/90lar/playlist.m3u8", type: "m3u8" },
   { name: "Doksanlar", genre: "90'lar", url: "https://moondigitaledge.radyotvonline.net/radyolanddoksanlar/playlist.m3u8", type: "m3u8" },
   { name: "Arabeskland", genre: "Arabesk", url: "https://moondigitalmaster.radyotvonline.net/arabeskland/playlist.m3u8", type: "m3u8" },
-  { name: 'Power FM (Arabesk)', url: 'https://listen.powerapp.com.tr/powerfm/abr/powerfm/128/playlist.m3u8' },
-  { name: 'Alem FM (Arabesk)', url: 'https://turkmedya.radyotvonline.net/alemfmaac' },
-  { name: 'Power Akustik (Arabesk)', url: 'https://listen.powerapp.com.tr/powerturkakustik/abr/powerturkakustik/128/playlist.m3u8' },
-  { name: 'Baba Radyo (Arabesk)', url: 'http://37.247.98.7:80/;stream.mp3' },
   { name: 'Baba Radyo (Arabesk)', url: 'http://37.247.98.7:80/;stream.mp3' },
   { name: 'Pal Nostalji (90lar)', url: 'http://shoutcast.radyogrup.com:1010/;' }
 ];
@@ -97,10 +96,40 @@ function RadioPlayer() {
 
 // --- ANA UYGULAMA ---
 function App() {
-  // Senin Login.jsx dosyan sessionStorage kullandığı için burayı da sessionStorage yaptık!
   const [isAuthenticated, setIsAuthenticated] = useState(sessionStorage.getItem('isAuth') === 'true');
 
-  // Login.jsx başarılı giriş yapınca bu fonksiyonu tetikleyecek
+  // --- GÜNCELLEME KONTROL SİSTEMİ ---
+  useEffect(() => {
+    async function setupUpdater() {
+      try {
+        // Yeni bir sürüm var mı kontrol et
+        const update = await check();
+        
+        if (update) {
+          console.log(`Yeni sürüm bulundu: v${update.version}`);
+          
+          // Kullanıcıya güncelleme bildirimi çıkar
+          const confirmUpdate = window.confirm(
+            `Yeni bir güncelleme mevcut (v${update.version}). Şimdi yükleyip yeniden başlatmak ister misiniz?`
+          );
+
+          if (confirmUpdate) {
+            // Önce güncellemeyi indir ve kur
+            await update.downloadAndInstall();
+            // Sonra uygulamayı yeni sürümle tekrar aç
+            await relaunch();
+          }
+        } else {
+          console.log("Uygulama zaten en son sürümde.");
+        }
+      } catch (error) {
+        console.error("Güncelleme hatası:", error);
+      }
+    }
+
+    setupUpdater();
+  }, []);
+
   const handleLoginStatus = (status) => {
     setIsAuthenticated(status);
   };
@@ -109,26 +138,21 @@ function App() {
     <BrowserRouter>
       <div className="min-h-screen bg-gray-50 flex flex-col pb-24">
         <Routes>
-          {/* onLogin props'unu senin Login.jsx'e gönderiyoruz */}
           <Route 
             path="/login" 
             element={isAuthenticated ? <Navigate to="/" replace /> : <Login onLogin={handleLoginStatus} />} 
           />
-          
           <Route 
             path="/" 
             element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />} 
           />
-          
           <Route 
             path="/editor" 
             element={isAuthenticated ? <Editor /> : <Navigate to="/login" replace />} 
           />
-
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
 
-        {/* Radyo Player her zaman altta */}
         <RadioPlayer />
       </div>
     </BrowserRouter>
