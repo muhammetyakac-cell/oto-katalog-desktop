@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "tauri": "tauri",
+    "release": "cross-env TAURI_SIGNING_PRIVATE_KEY=dW50cnVzdGVkIGNvbW1lbnQ6IHJzaWduIGVuY3J5cHRlZCBzZWNyZXQga2V5ClJXUlRZMEl5K25wWmtBTjhWYjZWWXcydXI3OWN2Vis4L0xuU084VDFIeVNYSzhBVzViY0FBQkFBQUFBQUFBQUFBQUlBQUFBQXoxdmYzUXpmb3dwUDRyUUREK1YxNEhhU3A5U1VWWG0weHRqcGNLWjRTOWpNZFE3Sko0WTVjRkNYWVU5K3pqSlhjNmQxMDRCd2tjTDZ6VFJxTW1hai96b2NFMXdDL2ZnczArWVdiN0l3c2R4UnBlY0dQTThYS1ZJKzNRQmVKVTF5aHplSEh2SHRpdHM9Cg== TAURI_SIGNING_PRIVATE_KEY_PASSWORD=19871987 npx tauri build"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.5.1",
@@ -29,6 +31,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "autoprefixer": "^10.5.0",
+    "cross-env": "^10.1.0",
     "eslint": "^10.2.1",
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
