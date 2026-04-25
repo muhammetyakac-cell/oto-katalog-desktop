@@ -1,16 +1,16 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { Play, Pause, Volume2, Radio } from 'lucide-react';
+import { Play, Pause, Volume2, Radio, RefreshCw } from 'lucide-react';
 
-// TAURI V2 DOĞRU IMPORT YOLLARI
+// TAURI V2 PLUGINS
 import { check } from '@tauri-apps/plugin-updater';
-import { relaunch } from '@tauri-apps/plugin-process'; // Burası değişti!
+import { relaunch } from '@tauri-apps/plugin-process';
 
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Editor from './pages/Editor';
 
-// --- RADYO İSTASYONLARI ---
+// --- RADYO İSTASYONLARI (TAM LİSTE) ---
 const STATIONS = [
   { name: 'Arabesk FM (Arabesk)', url: 'http://anadolu.liderhost.com.tr:6688/;' },
   { name: "Power FM", genre: "Yabancı Pop", url: "https://listen.powerapp.com.tr/powerfm/abr/powerfm/128/playlist.m3u8", type: "m3u8" },
@@ -24,6 +24,9 @@ const STATIONS = [
   { name: "90'lar", genre: "90'lar", url: "https://moondigitalmaster.radyotvonline.net/90lar/playlist.m3u8", type: "m3u8" },
   { name: "Doksanlar", genre: "90'lar", url: "https://moondigitaledge.radyotvonline.net/radyolanddoksanlar/playlist.m3u8", type: "m3u8" },
   { name: "Arabeskland", genre: "Arabesk", url: "https://moondigitalmaster.radyotvonline.net/arabeskland/playlist.m3u8", type: "m3u8" },
+  { name: 'Power FM (Arabesk)', url: 'https://listen.powerapp.com.tr/powerfm/abr/powerfm/128/playlist.m3u8' },
+  { name: 'Alem FM (Arabesk)', url: 'https://turkmedya.radyotvonline.net/alemfmaac' },
+  { name: 'Power Akustik (Arabesk)', url: 'https://listen.powerapp.com.tr/powerturkakustik/abr/powerturkakustik/128/playlist.m3u8' },
   { name: 'Baba Radyo (Arabesk)', url: 'http://37.247.98.7:80/;stream.mp3' },
   { name: 'Pal Nostalji (90lar)', url: 'http://shoutcast.radyogrup.com:1010/;' }
 ];
@@ -98,25 +101,53 @@ function RadioPlayer() {
 // --- ANA UYGULAMA ---
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(sessionStorage.getItem('isAuth') === 'true');
+  const [isChecking, setIsChecking] = useState(false);
 
+  // --- GÜNCELLEME KONTROL FONKSİYONU (MANUEL) ---
+  const handleUpdateCheck = async () => {
+    setIsChecking(true);
+    try {
+      console.log("Güncelleme aranıyor...");
+      const update = await check();
+      
+      if (update) {
+        const confirmUpdate = window.confirm(
+          `Yeni bir güncelleme mevcut: v${update.version}\n\nNotlar: ${update.body || 'Değişiklik yok'}\n\nŞimdi indirip kurmak istiyor musunuz?`
+        );
+
+        if (confirmUpdate) {
+          alert("Güncelleme indiriliyor, uygulama otomatik kapanacaktır...");
+          await update.downloadAndInstall();
+          await relaunch();
+        }
+      } else {
+        alert("Uygulamanız güncel. Herhangi bir yeni sürüm bulunamadı.");
+      }
+    } catch (error) {
+      console.error("Hata:", error);
+      alert(`Güncelleme kontrolü başarısız: ${error.toString()}`);
+    } finally {
+      setIsChecking(false);
+    }
+  };
+
+  // Uygulama her açıldığında arka planda bir kez otomatik kontrol yap
   useEffect(() => {
-    async function setupUpdater() {
+    async function autoCheck() {
       try {
         const update = await check();
         if (update) {
-          const confirmUpdate = window.confirm(
-            `Yeni bir güncelleme mevcut (v${update.version}). Şimdi yükleyip yeniden başlatmak ister misiniz?`
-          );
+          const confirmUpdate = window.confirm(`Yeni sürüm mevcut (v${update.version}). Kurulsun mu?`);
           if (confirmUpdate) {
             await update.downloadAndInstall();
-            await relaunch(); // Artık plugin-process üzerinden çalışacak
+            await relaunch();
           }
         }
-      } catch (error) {
-        console.error("Güncelleme hatası:", error);
+      } catch (err) {
+        console.log("Otomatik kontrol sessizce atlandı.");
       }
     }
-    setupUpdater();
+    autoCheck();
   }, []);
 
   const handleLoginStatus = (status) => {
@@ -126,6 +157,21 @@ function App() {
   return (
     <BrowserRouter>
       <div className="min-h-screen bg-gray-50 flex flex-col pb-24">
+        
+        {/* --- MANUEL GÜNCELLEME BUTONU (Sadece UI'da görünür) --- */}
+        <div className="fixed top-4 right-4 z-[10000]">
+          <button 
+            onClick={handleUpdateCheck}
+            disabled={isChecking}
+            className={`flex items-center gap-2 ${
+              isChecking ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
+            } text-white text-[10px] font-black py-2 px-4 rounded-full shadow-xl transition-all uppercase tracking-widest`}
+          >
+            <RefreshCw className={`w-3 h-3 ${isChecking ? 'animate-spin' : ''}`} />
+            {isChecking ? 'Kontrol Ediliyor...' : 'Güncellemeleri Denetle'}
+          </button>
+        </div>
+
         <Routes>
           <Route 
             path="/login" 
@@ -141,6 +187,7 @@ function App() {
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+
         <RadioPlayer />
       </div>
     </BrowserRouter>
