@@ -4,8 +4,8 @@
   "pub_date": "2026-04-25T14:00:00Z",
   "platforms": {
     "windows-x86_64": {
-      "signature": "BURAYA_TERMINALIN_VERDIGI_SIG_DOSYASININ_ICERIGINI_YAPISTIRACAKSIN",
-      "url": "https://github.com/muhammetyakac-cell/oto-katalog/releases/download/v0.1.1/oto-katalog_0.1.1_x64_en-US.msi.zip"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUTVA4cFFJVExpRlJGa3E3QkVvSTZUWWJweGhUQ3gzazZvc21BR1hkY2JWYnNucVV2NXpnTEJiclFFWjRSSllNc0plaGVSK204N0hDeGxPWFhSdzBCU3VVN3NyTkdHVUFZPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzc3MTI1NDY3CWZpbGU6b3RvLWthdGFsb2dfMC4xLjFfeDY0X2VuLVVTLm1zaQpRMTJhcGxCQ2ZZYmlvYnl4dHVZQWdUdnFNVy9hNS9uRStoN2tKV0F3V2FVUU5tc0h5WnBiNk95NlV3ZnkrNjB3WXBZNW1YVjRkQk9jK3kvSThYSG5CZz09Cg==",
+      "url": "https://github.com/muhammetyakac-cell/oto-katalog-desktop/releases/download/v0.1.1/oto-katalog_0.1.1_x64_en-US.msi"
     }
   }
 }
