@@ -1,6 +1,6 @@
 {
   "productName": "oto-katalog",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "identifier": "com.oto-katalog.app",
   "build": {
     "beforeDevCommand": "npm run dev",
