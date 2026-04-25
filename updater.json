@@ -1,0 +1,11 @@
+﻿{
+  "version": "0.1.1",
+  "notes": "Otomatik güncelleme sistemi ve radyo modülü eklendi.",
+  "pub_date": "2026-04-25T14:00:00Z",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "BURAYA_TERMINALIN_VERDIGI_SIG_DOSYASININ_ICERIGINI_YAPISTIRACAKSIN",
+      "url": "https://github.com/muhammetyakac-cell/oto-katalog/releases/download/v0.1.1/oto-katalog_0.1.1_x64_en-US.msi.zip"
+    }
+  }
+}

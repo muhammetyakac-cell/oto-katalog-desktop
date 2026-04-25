@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx';
 import { 
   UploadCloud, Settings2, CheckCircle2, Save, 
   RefreshCw, Download, ArrowLeft, Image as ImageIcon,
-  Edit2, ArrowLeftRight, Trash2, PlusCircle, X, Palette
+  Edit2, ArrowLeftRight, Trash2, PlusCircle, X, Palette, Loader2
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { PDFDownloadLink } from '@react-pdf/renderer';
@@ -19,7 +19,6 @@ export default function Editor() {
   const [products, setProducts] = useState([]);
   const [mapping, setMapping] = useState({ stokKodu: '', urunAdi: '', fiyat: '', resimUrl: '' });
   
-  // YENİ: Ekstra Özel Alan State'i
   const [customFieldsMapping, setCustomFieldsMapping] = useState([]); 
   
   const [percentChange, setPercentChange] = useState(0);
@@ -28,6 +27,8 @@ export default function Editor() {
   const [isSaving, setIsSaving] = useState(false);
   const [pdfReady, setPdfReady] = useState(false);
   const [loading, setLoading] = useState(!!projectId);
+  const [isProcessing, setIsProcessing] = useState(false);
+  
   const [themeKey, setThemeKey] = useState('emeraldNavy');
   const [includeCoverPage, setIncludeCoverPage] = useState(false);
   const [coverImageUrl, setCoverImageUrl] = useState('');
@@ -43,6 +44,7 @@ export default function Editor() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [bulkCategory, setBulkCategory] = useState('');
   const [lastSelectedIndex, setLastSelectedIndex] = useState(null);
+  const [showToast, setShowToast] = useState(false);
 
   useEffect(() => {
     if (projectId) {
@@ -61,7 +63,7 @@ export default function Editor() {
               fiyat: p.fiyat, 
               resimUrl: p.resim_url, 
               kategori: p.kategori,
-              ekstraOzellikler: p.ekstra_ozellikler || {} // DB'den JSONB'yi çekiyoruz
+              ekstraOzellikler: p.ekstra_ozellikler || {}
             })));
           }
         } catch (error) { console.error(error); } finally { setLoading(false); }
@@ -73,6 +75,51 @@ export default function Editor() {
   useEffect(() => {
     setPdfReady(false);
   }, [products, projectName, logoUrl, themeKey, includeCoverPage, coverImageUrl, coverTitle, includeBackCoverPage, backCoverContact]);
+
+  const resizeAndEncodeImage = (file, { maxWidth, maxHeight, quality = 0.5 }) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new window.Image();
+      img.onload = () => {
+        const ratio = Math.min(maxWidth / img.width, maxHeight / img.height, 1);
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.onerror = reject;
+      img.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  const uploadImageToStorage = async (file) => {
+    try {
+      const fileExt = 'jpg';
+      const fileName = `${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+      const filePath = `${projectId || 'temp'}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('product-images')
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('product-images')
+        .getPublicUrl(filePath);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Storage Hatası:', error.message);
+      return null;
+    }
+  };
 
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
@@ -86,41 +133,23 @@ export default function Editor() {
     reader.readAsArrayBuffer(file);
   };
 
-  const handleLogoUpload = (e) => {
+  const handleLogoUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    resizeAndEncodeImage(file, { maxWidth: 500, maxHeight: 220, quality: 0.8 }).then(setLogoUrl);
+    const base64 = await resizeAndEncodeImage(file, { maxWidth: 500, maxHeight: 220, quality: 0.8 });
+    setLogoUrl(base64);
   };
 
-  const handleCoverUpload = (e) => {
+  const handleCoverUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    resizeAndEncodeImage(file, { maxWidth: 1240, maxHeight: 1754, quality: 0.78 }).then(setCoverImageUrl);
+    const base64 = await resizeAndEncodeImage(file, { maxWidth: 1240, maxHeight: 1754, quality: 0.78 });
+    setCoverImageUrl(base64);
   };
 
-  const resizeAndEncodeImage = (file, { maxWidth, maxHeight, quality = 0.82 }) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const img = new window.Image();
-      img.onload = () => {
-        const ratio = Math.min(maxWidth / img.width, maxHeight / img.height, 1);
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(img.width * ratio);
-        canvas.height = Math.round(img.height * ratio);
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL('image/jpeg', quality));
-      };
-      img.onerror = reject;
-      img.src = reader.result;
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-
+  // EXCEL SİSTEMİ: Kullanıcının istediği gibi proxy ile linkleri oluşturur
   const confirmMapping = () => {
     setProducts(rawRows.map((item, index) => {
-      // Ekstra özellikleri objeye dönüştürüyoruz
       const ekstraObj = {};
       customFieldsMapping.forEach(cf => {
         if (cf.name && cf.col) ekstraObj[cf.name] = String(item[cf.col] || '');
@@ -153,7 +182,7 @@ export default function Editor() {
       const insertData = products.map(p => ({
         project_id: curId, stok_kodu: p.stokKodu, urun_adi: p.urunAdi,
         fiyat: p.fiyat, resim_url: p.resimUrl, kategori: p.kategori,
-        ekstra_ozellikler: p.ekstraOzellikler // Supabase'e JSONB olarak gidiyor
+        ekstra_ozellikler: p.ekstraOzellikler 
       }));
 
       await supabase.from('products').insert(insertData);
@@ -212,11 +241,31 @@ export default function Editor() {
     setSelectedIds([]); setLastSelectedIndex(null);
   };
 
+  const handleDownloadClick = () => {
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 5000);
+  };
+
   if (loading) return <div className="p-20 text-center font-bold text-blue-600">Taslak Yükleniyor...</div>;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-20 px-4">
+    <div className="max-w-7xl mx-auto space-y-6 pb-20 px-4 relative">
       
+      {showToast && (
+        <div className="fixed top-8 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 z-[9999] border border-gray-700 animate-bounce">
+          <div className="bg-green-500 rounded-full p-1">
+            <CheckCircle2 className="w-6 h-6 text-white" />
+          </div>
+          <div className="pr-4">
+            <h4 className="font-bold text-sm tracking-wide">İndirme Başlatıldı!</h4>
+            <p className="text-xs text-gray-300 mt-0.5">PDF dosyanız bilgisayarınızın <b className="text-white">"İndirilenler"</b> klasörüne kaydediliyor.</p>
+          </div>
+          <button onClick={() => setShowToast(false)} className="text-gray-400 hover:text-white transition">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
       <Link to="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-blue-600 font-medium transition-colors">
         <ArrowLeft className="w-4 h-4" /> Katalog Listesine Dön
       </Link>
@@ -249,7 +298,6 @@ export default function Editor() {
             ))}
           </div>
 
-          {/* YENİ: Ekstra Alan Ekleme Arayüzü */}
           <div className="mb-8 p-4 bg-gray-50 rounded-xl border border-dashed border-gray-300">
             <div className="flex items-center justify-between mb-4">
               <h4 className="text-sm font-bold text-gray-600">Özel Alanlar (Maksimum 3)</h4>
@@ -280,11 +328,10 @@ export default function Editor() {
                   </button>
                 </div>
               ))}
-              {customFieldsMapping.length === 0 && <p className="text-xs text-gray-400 italic">PDF kartında çıkmasını istediğiniz (Örn: Boyut, Garanti, Uyum) gibi ekstra alanlar ekleyebilirsiniz.</p>}
             </div>
           </div>
 
-          <button onClick={confirmMapping} className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition">DÜZENLEMEYİ BAŞLAT</button>
+          <button onClick={confirmMapping} className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg">DÜZENLEMEYİ BAŞLAT</button>
         </div>
       )}
 
@@ -293,7 +340,6 @@ export default function Editor() {
           
           <div className="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 mb-8">
             <div className="flex flex-wrap items-end justify-between gap-6 mb-8">
-              
               <div className="flex items-center gap-6 flex-1 min-w-[300px]">
                 <div className="w-20 h-20 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200 flex items-center justify-center overflow-hidden shadow-inner shrink-0">
                   {logoUrl ? <img src={logoUrl} className="w-full h-full object-contain" /> : <ImageIcon className="w-8 h-8 text-gray-300" />}
@@ -402,25 +448,27 @@ export default function Editor() {
                   <RefreshCw className="w-5 h-5" /> KATALOĞU HAZIRLA
                 </button>
               ) : (
-                <PDFDownloadLink 
-                  document={(
-                    <CatalogPDF
-                      products={products}
-                      projectName={projectName}
-                      logoUrl={logoUrl}
-                      themeKey={themeKey}
-                      includeCoverPage={includeCoverPage}
-                      coverImageUrl={coverImageUrl}
-                      coverTitle={coverTitle}
-                      includeBackCoverPage={includeBackCoverPage}
-                      backCoverContact={backCoverContact}
-                    />
-                  )}
-                  fileName={`${projectName.toLowerCase().replace(/\s+/g, '-')}.pdf`}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-10 py-4 rounded-2xl font-black shadow-2xl animate-bounce"
-                >
-                  {({ loading }) => loading ? 'Oluşturuluyor...' : <><Download className="w-6 h-6" /> PDF İNDİR</>}
-                </PDFDownloadLink>
+                <div onClick={handleDownloadClick}>
+                  <PDFDownloadLink 
+                    document={(
+                      <CatalogPDF
+                        products={products}
+                        projectName={projectName}
+                        logoUrl={logoUrl}
+                        themeKey={themeKey}
+                        includeCoverPage={includeCoverPage}
+                        coverImageUrl={coverImageUrl}
+                        coverTitle={coverTitle}
+                        includeBackCoverPage={includeBackCoverPage}
+                        backCoverContact={backCoverContact}
+                      />
+                    )}
+                    fileName={`${projectName.toLowerCase().replace(/\s+/g, '-')}.pdf`}
+                    className="flex items-center gap-2 bg-blue-600 text-white px-10 py-4 rounded-2xl font-black shadow-2xl animate-bounce cursor-pointer"
+                  >
+                    {({ loading }) => loading ? 'Oluşturuluyor...' : <><Download className="w-6 h-6" /> PDF İNDİR</>}
+                  </PDFDownloadLink>
+                </div>
               )}
             </div>
           </div>
@@ -454,15 +502,41 @@ export default function Editor() {
                         </div>
                         
                         {editingImageId === product.id ? (
-                          <div className="flex flex-col gap-1 w-32">
+                          <div className="flex flex-col gap-2 w-32">
+                            {/* PC'DEN STORAGE'A YÜKLEME (PC'den seçilirse yeni sistem) */}
+                            <label className={`text-[10px] font-bold bg-blue-600 text-white px-2 py-1.5 rounded-md cursor-pointer text-center hover:bg-blue-700 transition ${isProcessing ? 'opacity-50' : ''}`}>
+                              {isProcessing ? 'YÜKLENİYOR...' : 'PC\'DEN SEÇ'}
+                              <input 
+                                type="file" 
+                                className="hidden" 
+                                disabled={isProcessing}
+                                accept="image/*"
+                                onChange={async (e) => {
+                                  const file = e.target.files[0];
+                                  if (file) {
+                                    setIsProcessing(true);
+                                    const base64 = await resizeAndEncodeImage(file, { maxWidth: 300, maxHeight: 300, quality: 0.5 });
+                                    const blob = await (await fetch(base64)).blob();
+                                    const compressedFile = new File([blob], 'product.jpg', { type: 'image/jpeg' });
+                                    const url = await uploadImageToStorage(compressedFile);
+                                    if (url) setProducts(products.map(p => p.id === product.id ? {...p, resimUrl: url} : p));
+                                    setIsProcessing(false);
+                                    setEditingImageId(null);
+                                  }
+                                }}
+                              />
+                            </label>
+
+                            {/* MANUEL LİNK GİRİŞİ: Linki olduğu gibi veri tabanına yazar */}
                             <input type="text" value={tempImageUrl} onChange={(e) => setTempImageUrl(e.target.value)} placeholder="Yeni Link..." className="text-[10px] px-2 py-1.5 border border-blue-200 rounded-md bg-blue-50 outline-none w-full font-medium"/>
                             <div className="flex gap-1 w-full">
                               <button onClick={() => {
-                                const finalUrl = tempImageUrl ? `https://images.weserv.nl/?url=${encodeURIComponent(tempImageUrl)}&w=500` : '';
-                                setProducts(products.map(p => p.id === product.id ? {...p, resimUrl: finalUrl} : p));
+                                if (tempImageUrl) {
+                                  setProducts(products.map(p => p.id === product.id ? {...p, resimUrl: tempImageUrl} : p));
+                                }
                                 setEditingImageId(null);
-                              }} className="text-[10px] font-bold bg-green-500 text-white px-2 py-1 rounded-md flex-1 hover:bg-green-600">Güncelle</button>
-                              <button onClick={() => setEditingImageId(null)} className="text-[10px] font-bold bg-gray-200 text-gray-600 px-2 py-1 rounded-md hover:bg-gray-300">İptal</button>
+                              }} className="text-[10px] font-bold bg-green-500 text-white px-2 py-1 rounded-md flex-1 hover:bg-green-600">Tamam</button>
+                              <button onClick={() => setEditingImageId(null)} className="text-[10px] font-bold bg-gray-200 text-gray-600 px-2 py-1 rounded-md hover:bg-gray-300 flex-1">İptal</button>
                             </div>
                           </div>
                         ) : (
@@ -476,7 +550,6 @@ export default function Editor() {
                         <input type="text" value={product.stokKodu} onChange={(e) => setProducts(products.map(p => p.id === product.id ? {...p, stokKodu: e.target.value} : p))} className="text-xs font-bold text-blue-500 bg-blue-50 px-3 py-1 rounded-full outline-none" />
                         <input type="text" value={product.urunAdi} onChange={(e) => setProducts(products.map(p => p.id === product.id ? {...p, urunAdi: e.target.value} : p))} className="text-xl font-bold text-gray-800 bg-transparent block w-full outline-none border-b border-transparent focus:border-blue-200" />
                         
-                        {/* YENİ: Editör İçindeki Ekstra Alan Girişleri */}
                         {product.ekstraOzellikler && Object.keys(product.ekstraOzellikler).length > 0 && (
                           <div className="flex flex-wrap gap-2 pt-2">
                             {Object.entries(product.ekstraOzellikler).map(([key, val], idx) => (
@@ -528,7 +601,6 @@ export default function Editor() {
               <button onClick={handleSwap} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-xs font-black transition-colors">DEĞİŞTİR</button>
             </div>
           </div>
-
         </div>
       )}
     </div>
